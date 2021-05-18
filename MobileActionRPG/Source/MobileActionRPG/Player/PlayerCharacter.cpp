@@ -70,47 +70,49 @@ void APlayerCharacter::Skill3()
 }
 
 void APlayerCharacter::MoveVertical(float pValue)
-{
-	//if (pValue * pValue > 0 && GetVelocity().Size() <= 1)
-	//{
-	//	UE_LOG(LogTemp, Warning, TEXT("GetActorRotation : %s"), *GetActorRotation().ToString());
-	//	UE_LOG(LogTemp, Warning, TEXT("GetVelocity : %f"), GetVelocity().Size());
-	//	FRotator rot = GetActorRotation();
-	//	rot.Yaw = springArm->GetTargetRotation().Yaw;
-	//	SetActorRotation(rot);
-	//	UE_LOG(LogTemp, Warning, TEXT("SetActorRotation : %s"), *GetActorRotation().ToString());
-	//}
+{    
+	if (pValue * pValue > 0 && GetVelocity().Size() <= 1)
+	{
+	    FRotator rot = GetActorRotation();
+	    rot.Yaw = springArm->GetComponentRotation().Yaw;
+	    SetActorRotation(rot);
+		rot = springArm->GetComponentRotation();
+		rot.Yaw = GetActorRotation().Yaw;
+		springArm->SetWorldRotation(rot);
+
+		UE_LOG(LogTemp, Warning, TEXT("GetActorYaw: %f SpringArmYaw: %f"), GetActorRotation().Yaw,springArm->GetTargetRotation().Yaw);
+	}
 	AddMovementInput(GetActorForwardVector()* pValue);
 }
 
 void APlayerCharacter::MoveHorizontal(float pValue)
 {
-	//if (pValue * pValue > 0 && GetVelocity().Size() <= 1)
-	//{
-	//	UE_LOG(LogTemp, Warning, TEXT("GetActorRotation : %s"), *GetActorRotation().ToString());
-	//	UE_LOG(LogTemp, Warning, TEXT("GetVelocity : %f"), GetVelocity().Size());
-	//	FRotator rot = GetActorRotation();
-	//	rot.Yaw = springArm->GetTargetRotation().Yaw;
-	//	SetActorRotation(rot);
-	//	UE_LOG(LogTemp, Warning, TEXT("SetActorRotation : %s"), *GetActorRotation().ToString());
-	//}
+	if (pValue * pValue > 0 && GetVelocity().Size() <= 1)
+	{
+		FRotator rot = GetActorRotation();
+		rot.Yaw = springArm->GetComponentRotation().Yaw;
+		SetActorRotation(rot);
+		rot = springArm->GetComponentRotation();
+		rot.Yaw = GetActorRotation().Yaw;
+		springArm->SetWorldRotation(rot);
+
+		UE_LOG(LogTemp, Warning, TEXT("GetActorYaw: %f SpringArmYaw: %f"), GetActorRotation().Yaw, springArm->GetTargetRotation().Yaw);
+	}
 	AddMovementInput(GetActorRightVector() * pValue);
 }
 
 void APlayerCharacter::RotateHorizontal(float pValue)
-{
-	AddControllerYawInput(pValue);
-	/*FRotator rot = springArm->GetComponentRotation();
+{    
+	FRotator rot = springArm->GetComponentRotation();
 	rot.Roll = 0.f;
 	rot.Yaw += pValue;
-	springArm->SetWorldRotation(rot);*/
+	springArm->SetWorldRotation(rot);
 }
 
 void APlayerCharacter::RotateVertical(float pValue)
 {
-	AddControllerPitchInput(pValue);
-	//FRotator rot = springArm->GetComponentRotation();
-	//rot.Roll = 0.f;
-	//rot.Pitch += pValue;
-	//springArm->SetWorldRotation(rot);
+	FRotator rot = springArm->GetComponentRotation();
+	rot.Roll = 0.f;
+	rot.Pitch += pValue;
+	springArm->SetWorldRotation(rot);
 }
