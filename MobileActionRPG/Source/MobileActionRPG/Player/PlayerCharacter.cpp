@@ -33,7 +33,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 			FRotator rotation(0, GetControlRotation().Yaw, 0);
 			FVector directionForward = FRotationMatrix(rotation).GetUnitAxis(EAxis::X);
 			FVector directionRight = FRotationMatrix(rotation).GetUnitAxis(EAxis::Y);
-			UE_LOG(LogTemp,Warning,TEXT("Direction Forward :%s , right : %s"), *directionForward.ToString() , *directionRight.ToString())
 			FVector movementVector = directionForward * moveVertical + directionRight * moveHorizontal;
 			float divivder = (moveHorizontalEpsilon > 0 && moveVerticalEpsilon > 0) ? 1.4f : 1.f;
 			AddMovementInput(movementVector / divivder);
@@ -48,10 +47,10 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindAction(TEXT("Attack"), EInputEvent::IE_Pressed, this, &APlayerCharacter::Attack);
-	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &APlayerCharacter::Attack);
-	PlayerInputComponent->BindAction(TEXT("Skill1"), EInputEvent::IE_Pressed, this, &APlayerCharacter::Attack);
-	PlayerInputComponent->BindAction(TEXT("Skill2"), EInputEvent::IE_Pressed, this, &APlayerCharacter::Attack);
-	PlayerInputComponent->BindAction(TEXT("Skill3"), EInputEvent::IE_Pressed, this, &APlayerCharacter::Attack);
+	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &APlayerCharacter::Jump);
+	PlayerInputComponent->BindAction(TEXT("Skill1"), EInputEvent::IE_Pressed, this, &APlayerCharacter::Skill1);
+	PlayerInputComponent->BindAction(TEXT("Skill2"), EInputEvent::IE_Pressed, this, &APlayerCharacter::Skill2);
+	PlayerInputComponent->BindAction(TEXT("Skill3"), EInputEvent::IE_Pressed, this, &APlayerCharacter::Skill3);
 	PlayerInputComponent->BindAxis(TEXT("MoveVertical"), this, &APlayerCharacter::MoveVertical);
 	PlayerInputComponent->BindAxis(TEXT("MoveHorizontal"), this, &APlayerCharacter::MoveHorizontal);
 	PlayerInputComponent->BindAxis(TEXT("RotateVertical"), this, &APlayerCharacter::RotateVertical);
@@ -61,29 +60,33 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::Attack()
 {
-
+	UE_LOG(LogTemp,Warning,TEXT("Pyungta"))
 }
 
 void APlayerCharacter::Jump()
 {
 
+	UE_LOG(LogTemp, Warning, TEXT("Jump"))
 }
 
 
 void APlayerCharacter::Skill1()
 {
 
+
+	UE_LOG(LogTemp, Warning, TEXT("Skill1"))
 }
 
 
 void APlayerCharacter::Skill2()
 {
 
+	UE_LOG(LogTemp, Warning, TEXT("Skill2"))
 }
 
 void APlayerCharacter::Skill3()
 {
-
+	UE_LOG(LogTemp, Warning, TEXT("Skill3"))
 }
 
 void APlayerCharacter::MoveVertical(float pValue)
@@ -106,4 +109,40 @@ void APlayerCharacter::RotateHorizontal(float pValue)
 void APlayerCharacter::RotateVertical(float pValue)
 {
 	AddControllerPitchInput(pValue);
+}
+
+bool APlayerCharacter::IsLockOn()
+{
+	return isLockOn;
+}
+
+float APlayerCharacter::GetNonLockOnSpeed()
+{
+	float value = 0;
+	float moveHorizontalEpsilon = moveHorizontal * moveHorizontal;
+	float moveVerticalEpsilon = moveVertical * moveVertical;
+	if (moveHorizontalEpsilon > 0 && moveVerticalEpsilon > 0)
+	{
+		value = FMath::Sqrt((moveHorizontalEpsilon + moveVerticalEpsilon)) / 1.4f;
+	}
+	else
+	{
+		value = (moveHorizontalEpsilon > 0) ? moveHorizontal : moveVertical;
+	}
+	if (value < 0)
+	{
+		value = -value;
+	}
+
+	return value;
+}
+
+float APlayerCharacter::GetLockOnVertical()
+{
+	return moveVertical;
+}
+
+float APlayerCharacter::GetLockOnHorizontal()
+{
+	return moveHorizontal;
 }

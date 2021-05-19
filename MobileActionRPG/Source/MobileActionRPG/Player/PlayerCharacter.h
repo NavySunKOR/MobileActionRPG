@@ -48,4 +48,13 @@ public:
 	void RotateHorizontal(float pValue);
 	void RotateVertical(float pValue);
 
+	UFUNCTION(BlueprintPure)
+	bool IsLockOn();
+
+	UFUNCTION(BlueprintPure)
+	float GetNonLockOnSpeed();
+	UFUNCTION(BlueprintPure)
+	float GetLockOnVertical();
+	UFUNCTION(BlueprintPure)
+	float GetLockOnHorizontal();
 };
