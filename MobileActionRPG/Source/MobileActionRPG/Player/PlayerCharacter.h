@@ -7,13 +7,20 @@
 #include "PlayerCharacter.generated.h"
 
 class USpringArmComponent;
+class USkeletalMeshComponent;
 
 UCLASS()
 class MOBILEACTIONRPG_API APlayerCharacter : public ACharacter
 {
 	GENERATED_BODY()
 private:
+	UPROPERTY()
 	USpringArmComponent* springArm;
+	USkeletalMeshComponent* mesh;
+	bool isLockOn = false;
+	float moveHorizontal = 0.f;
+	float moveVertical = 0.f;
+
 public:
 	// Sets default values for this character's properties
 	APlayerCharacter();

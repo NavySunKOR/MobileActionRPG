@@ -15,6 +15,7 @@ APlayerCharacter::APlayerCharacter()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	mesh = GetMesh();
 	springArm = Cast<USpringArmComponent>(GetDefaultSubobjectByName(TEXT("CameraArm")));
 }
 
@@ -22,6 +23,22 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	//움직이면 무브먼트
+	float moveHorizontalEpsilon = moveHorizontal * moveHorizontal;
+	float moveVerticalEpsilon = moveVertical * moveVertical;
+	if (moveHorizontalEpsilon > 0 || moveVerticalEpsilon > 0)
+	{
+			//락온하면 캐릭터 자체가 앞뒤좌우로 움직임.
+			FRotator rotation(0, GetControlRotation().Yaw, 0);
+			FVector directionForward = FRotationMatrix(rotation).GetUnitAxis(EAxis::X);
+			FVector directionRight = FRotationMatrix(rotation).GetUnitAxis(EAxis::Y);
+			UE_LOG(LogTemp,Warning,TEXT("Direction Forward :%s , right : %s"), *directionForward.ToString() , *directionRight.ToString())
+			FVector movementVector = directionForward * moveVertical + directionRight * moveHorizontal;
+			float divivder = (moveHorizontalEpsilon > 0 && moveVerticalEpsilon > 0) ? 1.4f : 1.f;
+			AddMovementInput(movementVector / divivder);
+	}
+
 
 }
 
@@ -70,49 +87,23 @@ void APlayerCharacter::Skill3()
 }
 
 void APlayerCharacter::MoveVertical(float pValue)
-{    
-	if (pValue * pValue > 0 && GetVelocity().Size() <= 1)
-	{
-	    FRotator rot = GetActorRotation();
-	    rot.Yaw = springArm->GetComponentRotation().Yaw;
-	    SetActorRotation(rot);
-		rot = springArm->GetComponentRotation();
-		rot.Yaw = GetActorRotation().Yaw;
-		springArm->SetWorldRotation(rot);
+{
+	moveVertical = pValue;
 
-		UE_LOG(LogTemp, Warning, TEXT("GetActorYaw: %f SpringArmYaw: %f"), GetActorRotation().Yaw,springArm->GetTargetRotation().Yaw);
-	}
-	AddMovementInput(GetActorForwardVector()* pValue);
 }
 
 void APlayerCharacter::MoveHorizontal(float pValue)
 {
-	if (pValue * pValue > 0 && GetVelocity().Size() <= 1)
-	{
-		FRotator rot = GetActorRotation();
-		rot.Yaw = springArm->GetComponentRotation().Yaw;
-		SetActorRotation(rot);
-		rot = springArm->GetComponentRotation();
-		rot.Yaw = GetActorRotation().Yaw;
-		springArm->SetWorldRotation(rot);
-
-		UE_LOG(LogTemp, Warning, TEXT("GetActorYaw: %f SpringArmYaw: %f"), GetActorRotation().Yaw, springArm->GetTargetRotation().Yaw);
-	}
-	AddMovementInput(GetActorRightVector() * pValue);
+	moveHorizontal = pValue;
+	//IsLockon이냐에 따라서 조작이 달라짐 .
 }
 
 void APlayerCharacter::RotateHorizontal(float pValue)
-{    
-	FRotator rot = springArm->GetComponentRotation();
-	rot.Roll = 0.f;
-	rot.Yaw += pValue;
-	springArm->SetWorldRotation(rot);
+{   
+	AddControllerYawInput(pValue);
 }
 
 void APlayerCharacter::RotateVertical(float pValue)
 {
-	FRotator rot = springArm->GetComponentRotation();
-	rot.Roll = 0.f;
-	rot.Pitch += pValue;
-	springArm->SetWorldRotation(rot);
+	AddControllerPitchInput(pValue);
 }
