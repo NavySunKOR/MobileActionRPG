@@ -1,7 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include <GameFramework/SpringArmComponent.h>
 #include "MobileActionRPG/Player/PlayerCharacter.h"
+#include <GameFramework/SpringArmComponent.h>
+#include <Animation/AnimMontage.h>
+
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -16,6 +18,7 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	mesh = GetMesh();
+	animInst = mesh->GetAnimInstance();
 	springArm = Cast<USpringArmComponent>(GetDefaultSubobjectByName(TEXT("CameraArm")));
 }
 
@@ -27,7 +30,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 	//움직이면 무브먼트
 	float moveHorizontalEpsilon = moveHorizontal * moveHorizontal;
 	float moveVerticalEpsilon = moveVertical * moveVertical;
-	if (moveHorizontalEpsilon > 0 || moveVerticalEpsilon > 0)
+	if ((moveHorizontalEpsilon > 0 || moveVerticalEpsilon > 0) && !isAttack)
 	{
 			//락온하면 캐릭터 자체가 앞뒤좌우로 움직임.
 			FRotator rotation(0, GetControlRotation().Yaw, 0);
@@ -36,6 +39,24 @@ void APlayerCharacter::Tick(float DeltaTime)
 			FVector movementVector = directionForward * moveVertical + directionRight * moveHorizontal;
 			float divivder = (moveHorizontalEpsilon > 0 && moveVerticalEpsilon > 0) ? 1.4f : 1.f;
 			AddMovementInput(movementVector / divivder);
+	}
+
+	if (isAttack)
+	{
+		int calc = (normalAttackSequence - 1 < 0)? normalAttackAnims.Num() -1 : normalAttackSequence - 1;
+		attackTimer += DeltaTime;
+		if (attackTimer > normalAttackAnims[calc]->SequenceLength * 0.6f)
+		{
+			isNormalAttackTransible = true;
+		}
+
+		if (attackTimer > normalAttackAnims[calc]->SequenceLength)
+		{
+			isAttack = false;
+			attackTimer = 0.f;
+			normalAttackSequence = 0;
+			mesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+		}
 	}
 
 
@@ -60,7 +81,30 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::Attack()
 {
-	UE_LOG(LogTemp,Warning,TEXT("Pyungta"))
+	if (!isAttack)
+	{
+		isAttack = true;
+		isNormalAttackTransible = false;
+		mesh->PlayAnimation(normalAttackAnims[normalAttackSequence],false);
+		normalAttackSequence++;
+		if (normalAttackSequence >= normalAttackAnims.Num())
+		{
+			normalAttackSequence = 0;
+		}
+		UE_LOG(LogTemp, Warning, TEXT("Pyungta"))
+	}
+	else if (isAttack && isNormalAttackTransible)
+	{
+		attackTimer = 0.f;
+		isNormalAttackTransible = false;
+		mesh->PlayAnimation(normalAttackAnims[normalAttackSequence], false);
+		normalAttackSequence++;
+		if (normalAttackSequence >= normalAttackAnims.Num())
+		{
+			normalAttackSequence = 0;
+		}
+		UE_LOG(LogTemp, Warning, TEXT("Pyungta Sequence"))
+	}
 }
 
 void APlayerCharacter::Jump()

@@ -14,12 +14,21 @@ class MOBILEACTIONRPG_API APlayerCharacter : public ACharacter
 {
 	GENERATED_BODY()
 private:
-	UPROPERTY()
+	bool isAttack = false;
+	bool isNormalAttackTransible = true;
+	float attackTimer = 0.f;
+	int normalAttackSequence = 0;
 	USpringArmComponent* springArm;
 	USkeletalMeshComponent* mesh;
 	bool isLockOn = false;
 	float moveHorizontal = 0.f;
 	float moveVertical = 0.f;
+
+	UPROPERTY(EditAnywhere, Category = "Animation")
+	TArray<UAnimSequence*> normalAttackAnims;
+
+	UAnimInstance* animInst;
+
 
 public:
 	// Sets default values for this character's properties
