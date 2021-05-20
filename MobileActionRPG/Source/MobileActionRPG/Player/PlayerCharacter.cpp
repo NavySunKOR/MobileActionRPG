@@ -30,7 +30,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 	//움직이면 무브먼트
 	float moveHorizontalEpsilon = moveHorizontal * moveHorizontal;
 	float moveVerticalEpsilon = moveVertical * moveVertical;
-	if ((moveHorizontalEpsilon > 0 || moveVerticalEpsilon > 0) && !isAttack)
+	if ((moveHorizontalEpsilon > 0 || moveVerticalEpsilon > 0) && currentAttackType == CurrentAttackType::Idle)
 	{
 			//락온하면 캐릭터 자체가 앞뒤좌우로 움직임.
 			FRotator rotation(0, GetControlRotation().Yaw, 0);
@@ -41,21 +41,48 @@ void APlayerCharacter::Tick(float DeltaTime)
 			AddMovementInput(movementVector / divivder);
 	}
 
-	if (isAttack)
+	if (currentAttackType != CurrentAttackType::Idle)
 	{
-		int calc = (normalAttackSequence - 1 < 0)? normalAttackAnims.Num() -1 : normalAttackSequence - 1;
 		attackTimer += DeltaTime;
-		if (attackTimer > normalAttackAnims[calc]->SequenceLength * 0.6f)
+		if (currentAttackType == CurrentAttackType::NormalAttack)
 		{
-			isNormalAttackTransible = true;
-		}
+			int calc = (normalAttackSequence - 1 < 0) ? normalAttackAnims.Num() - 1 : normalAttackSequence - 1;
+			if (attackTimer > normalAttackAnims[calc]->SequenceLength * 0.6f)
+			{
+				isNormalAttackTransible = true;
+			}
 
-		if (attackTimer > normalAttackAnims[calc]->SequenceLength)
+			if (attackTimer > normalAttackAnims[calc]->SequenceLength)
+			{
+				currentAttackType = CurrentAttackType::Idle;
+				attackTimer = 0.f;
+				normalAttackSequence = 0;
+				mesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+			}
+		}
+		else if (currentAttackType == CurrentAttackType::Skill1)
 		{
-			isAttack = false;
-			attackTimer = 0.f;
-			normalAttackSequence = 0;
-			mesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+			if (attackTimer > skillAnims[0]->SequenceLength)
+			{
+				currentAttackType = CurrentAttackType::Idle;
+				mesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+			}
+		}
+		else if (currentAttackType == CurrentAttackType::Skill1)
+		{
+			if (attackTimer > skillAnims[1]->SequenceLength)
+			{
+				currentAttackType = CurrentAttackType::Idle;
+				mesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+			}
+		}
+		else if (currentAttackType == CurrentAttackType::Skill1)
+		{
+			if (attackTimer > skillAnims[2]->SequenceLength)
+			{
+				currentAttackType = CurrentAttackType::Idle;
+				mesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+			}
 		}
 	}
 
@@ -81,9 +108,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::Attack()
 {
-	if (!isAttack)
+	if (currentAttackType == CurrentAttackType::Idle)
 	{
-		isAttack = true;
+		currentAttackType = CurrentAttackType::NormalAttack;
 		isNormalAttackTransible = false;
 		mesh->PlayAnimation(normalAttackAnims[normalAttackSequence],false);
 		normalAttackSequence++;
@@ -93,7 +120,7 @@ void APlayerCharacter::Attack()
 		}
 		UE_LOG(LogTemp, Warning, TEXT("Pyungta"))
 	}
-	else if (isAttack && isNormalAttackTransible)
+	else if (currentAttackType == CurrentAttackType::NormalAttack && isNormalAttackTransible)
 	{
 		attackTimer = 0.f;
 		isNormalAttackTransible = false;
@@ -116,20 +143,34 @@ void APlayerCharacter::Jump()
 
 void APlayerCharacter::Skill1()
 {
-
-
-	UE_LOG(LogTemp, Warning, TEXT("Skill1"))
+	if (currentAttackType == CurrentAttackType::Idle)
+	{
+		currentAttackType = CurrentAttackType::Skill1;
+		mesh->PlayAnimation(skillAnims[0], false);
+		UE_LOG(LogTemp, Warning, TEXT("Skill1"))
+	}
 }
 
 
 void APlayerCharacter::Skill2()
 {
-
+	if (currentAttackType == CurrentAttackType::Idle)
+	{
+		currentAttackType = CurrentAttackType::Skill2;
+		mesh->PlayAnimation(skillAnims[1], false);
+		UE_LOG(LogTemp, Warning, TEXT("Skill1"))
+	}
 	UE_LOG(LogTemp, Warning, TEXT("Skill2"))
 }
 
 void APlayerCharacter::Skill3()
 {
+	if (currentAttackType == CurrentAttackType::Idle)
+	{
+		currentAttackType = CurrentAttackType::Skill3;
+		mesh->PlayAnimation(skillAnims[2], false);
+		UE_LOG(LogTemp, Warning, TEXT("Skill1"))
+	}
 	UE_LOG(LogTemp, Warning, TEXT("Skill3"))
 }
 

@@ -9,12 +9,21 @@
 class USpringArmComponent;
 class USkeletalMeshComponent;
 
+
+enum class CurrentAttackType
+{
+	Idle = 0,
+	NormalAttack = 1,
+	Skill1,
+	Skill2,
+	Skill3,
+};
+
 UCLASS()
 class MOBILEACTIONRPG_API APlayerCharacter : public ACharacter
 {
 	GENERATED_BODY()
 private:
-	bool isAttack = false;
 	bool isNormalAttackTransible = true;
 	float attackTimer = 0.f;
 	int normalAttackSequence = 0;
@@ -24,8 +33,13 @@ private:
 	float moveHorizontal = 0.f;
 	float moveVertical = 0.f;
 
+	CurrentAttackType currentAttackType = CurrentAttackType::Idle;
+
 	UPROPERTY(EditAnywhere, Category = "Animation")
 	TArray<UAnimSequence*> normalAttackAnims;
+
+	UPROPERTY(EditAnywhere, Category = "Animation")
+	TArray<UAnimSequence*> skillAnims;
 
 	UAnimInstance* animInst;
 
