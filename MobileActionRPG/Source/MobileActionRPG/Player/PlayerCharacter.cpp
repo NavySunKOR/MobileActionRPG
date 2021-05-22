@@ -2,6 +2,7 @@
 
 #include "MobileActionRPG/Player/PlayerCharacter.h"
 #include <GameFramework/SpringArmComponent.h>
+#include <Kismet/GameplayStatics.h>
 #include <Animation/AnimMontage.h>
 
 
@@ -20,6 +21,9 @@ void APlayerCharacter::BeginPlay()
 	mesh = GetMesh();
 	animInst = mesh->GetAnimInstance();
 	springArm = Cast<USpringArmComponent>(GetDefaultSubobjectByName(TEXT("CameraArm")));
+	skill1Timer = skill1CoolTime;
+	skill2Timer = skill2CoolTime;
+	skill3Timer = skill3CoolTime;
 }
 
 // Called every frame
@@ -27,12 +31,12 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//øÚ¡˜¿Ã∏È π´∫Í∏’∆Æ
+	//
 	float moveHorizontalEpsilon = moveHorizontal * moveHorizontal;
 	float moveVerticalEpsilon = moveVertical * moveVertical;
 	if ((moveHorizontalEpsilon > 0 || moveVerticalEpsilon > 0) && currentAttackType == CurrentAttackType::Idle)
 	{
-			//∂Ùø¬«œ∏È ƒ≥∏Ø≈Õ ¿⁄√º∞° æ’µ⁄¡¬øÏ∑Œ øÚ¡˜¿”.
+			//
 			FRotator rotation(0, GetControlRotation().Yaw, 0);
 			FVector directionForward = FRotationMatrix(rotation).GetUnitAxis(EAxis::X);
 			FVector directionRight = FRotationMatrix(rotation).GetUnitAxis(EAxis::Y);
@@ -62,30 +66,64 @@ void APlayerCharacter::Tick(float DeltaTime)
 		}
 		else if (currentAttackType == CurrentAttackType::Skill1)
 		{
-			if (attackTimer > skillAnims[0]->SequenceLength)
+			if (attackTimer > skill1Anim->SequenceLength)
 			{
+				attackTimer = 0.f;
 				currentAttackType = CurrentAttackType::Idle;
 				mesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 			}
 		}
-		else if (currentAttackType == CurrentAttackType::Skill1)
+		else if (currentAttackType == CurrentAttackType::Skill2)
 		{
-			if (attackTimer > skillAnims[1]->SequenceLength)
+			if (attackTimer > skill2Anim->SequenceLength)
 			{
+				attackTimer = 0.f;
 				currentAttackType = CurrentAttackType::Idle;
 				mesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 			}
 		}
-		else if (currentAttackType == CurrentAttackType::Skill1)
+		else if (currentAttackType == CurrentAttackType::Skill3)
 		{
-			if (attackTimer > skillAnims[2]->SequenceLength)
+			if (attackTimer > skill3Anim->SequenceLength)
 			{
+				attackTimer = 0.f;
 				currentAttackType = CurrentAttackType::Idle;
 				mesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 			}
 		}
 	}
 
+	//Cooltime
+	if (skill1Timer < skill1CoolTime)
+	{
+		skill1Timer += DeltaTime;
+	}
+
+	if (skill2Timer < skill2CoolTime)
+	{
+		skill2Timer += DeltaTime;
+	}
+
+	if (skill3Timer < skill3CoolTime)
+	{
+		skill3Timer += DeltaTime;
+	}
+
+	//Skill1Actiavtion
+
+	if (isSkill1Activated)
+	{
+		skill1DurationTimer += DeltaTime;
+		//Skill1 duration ÌåêÏ†ï
+		if (skill1DurationTimer > skill1Duration)
+		{
+			//Skill1 finish ÌåêÏ†ï
+			skill1DurationTimer = 0.f;
+			isSkill1Activated = false;
+			UGameplayStatics::SpawnEmitterAttached(skill1DurationEndParticle, GetMesh(), TEXT("Root"),FVector(0,0,100.f));
+			UGameplayStatics::SpawnSoundAttached(skill1DurationEndSound, GetMesh(), TEXT("Root"));
+		}
+	}
 
 }
 
@@ -108,7 +146,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::Attack()
 {
-	if (currentAttackType == CurrentAttackType::Idle)
+	if (currentAttackType == CurrentAttackType::Idle )
 	{
 		currentAttackType = CurrentAttackType::NormalAttack;
 		isNormalAttackTransible = false;
@@ -143,10 +181,12 @@ void APlayerCharacter::Jump()
 
 void APlayerCharacter::Skill1()
 {
-	if (currentAttackType == CurrentAttackType::Idle)
+	if ((currentAttackType == CurrentAttackType::Idle || currentAttackType == CurrentAttackType::NormalAttack) && skill1Timer >= skill1CoolTime)
 	{
+		skill1Timer = 0.f;
 		currentAttackType = CurrentAttackType::Skill1;
-		mesh->PlayAnimation(skillAnims[0], false);
+		isSkill1Activated = true;
+		mesh->PlayAnimation(skill1Anim, false);
 		UE_LOG(LogTemp, Warning, TEXT("Skill1"))
 	}
 }
@@ -154,24 +194,24 @@ void APlayerCharacter::Skill1()
 
 void APlayerCharacter::Skill2()
 {
-	if (currentAttackType == CurrentAttackType::Idle)
+	if (currentAttackType == CurrentAttackType::Idle && skill2Timer >= skill2CoolTime)
 	{
+		skill2Timer = 0.f;
 		currentAttackType = CurrentAttackType::Skill2;
-		mesh->PlayAnimation(skillAnims[1], false);
-		UE_LOG(LogTemp, Warning, TEXT("Skill1"))
+		mesh->PlayAnimation(skill2Anim, false);
+		UE_LOG(LogTemp, Warning, TEXT("Skill2"))
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Skill2"))
 }
 
 void APlayerCharacter::Skill3()
 {
-	if (currentAttackType == CurrentAttackType::Idle)
+	if (currentAttackType == CurrentAttackType::Idle && skill3Timer >= skill3CoolTime)
 	{
+		skill3Timer = 0.f;
 		currentAttackType = CurrentAttackType::Skill3;
-		mesh->PlayAnimation(skillAnims[2], false);
-		UE_LOG(LogTemp, Warning, TEXT("Skill1"))
+		mesh->PlayAnimation(skill3Anim, false);
+		UE_LOG(LogTemp, Warning, TEXT("Skill3"))
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Skill3"))
 }
 
 void APlayerCharacter::MoveVertical(float pValue)
@@ -183,7 +223,7 @@ void APlayerCharacter::MoveVertical(float pValue)
 void APlayerCharacter::MoveHorizontal(float pValue)
 {
 	moveHorizontal = pValue;
-	//IsLockon¿Ã≥ƒø° µ˚∂Ûº≠ ¡∂¿€¿Ã ¥ﬁ∂Û¡¸ .
+	//IsLockon
 }
 
 void APlayerCharacter::RotateHorizontal(float pValue)

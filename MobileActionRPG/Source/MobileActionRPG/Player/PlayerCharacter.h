@@ -8,6 +8,7 @@
 
 class USpringArmComponent;
 class USkeletalMeshComponent;
+class USkillInformation;
 
 
 enum class CurrentAttackType
@@ -19,27 +20,66 @@ enum class CurrentAttackType
 	Skill3,
 };
 
+
 UCLASS()
 class MOBILEACTIONRPG_API APlayerCharacter : public ACharacter
 {
 	GENERATED_BODY()
 private:
-	bool isNormalAttackTransible = true;
-	float attackTimer = 0.f;
-	int normalAttackSequence = 0;
 	USpringArmComponent* springArm;
 	USkeletalMeshComponent* mesh;
 	bool isLockOn = false;
+	bool isNormalAttackTransible = true;
+	float attackTimer = 0.f;
 	float moveHorizontal = 0.f;
 	float moveVertical = 0.f;
 
+	int normalAttackSequence = 0;
+
+
 	CurrentAttackType currentAttackType = CurrentAttackType::Idle;
 
-	UPROPERTY(EditAnywhere, Category = "Animation")
-	TArray<UAnimSequence*> normalAttackAnims;
+	float skill1Timer = 0.f;
+	float skill2Timer = 0.f;
+	float skill3Timer = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Animation")
-	TArray<UAnimSequence*> skillAnims;
+
+	UPROPERTY(EditAnywhere, Category = "NormalAttack")
+	TArray<UAnimSequence*> normalAttackAnims;
+	UPROPERTY(EditAnywhere, Category = "NormalAttack")
+	UParticleSystem* normalAttackHitParticle;
+
+	UPROPERTY(EditAnywhere, Category = "Skill1")
+	float skill1CoolTime;
+	UPROPERTY(EditAnywhere, Category = "Skill1")
+	float skill1Duration;
+	UPROPERTY(EditAnywhere, Category = "Skill1")
+	UAnimSequence* skill1Anim;
+	UPROPERTY(EditAnywhere, Category = "Skill1")
+	UParticleSystem* skill1HitParticle;
+	UPROPERTY(EditAnywhere, Category = "Skill1")
+	USoundBase* skill1DurationEndSound;
+	UPROPERTY(EditAnywhere, Category = "Skill1")
+	UParticleSystem* skill1DurationEndParticle;
+	bool isSkill1Activated = false;
+	float skill1DurationTimer;
+	
+	
+
+	UPROPERTY(EditAnywhere, Category = "Skill2")
+	float skill2CoolTime;
+	UPROPERTY(EditAnywhere, Category = "Skill2")
+	UAnimSequence* skill2Anim;
+	UPROPERTY(EditAnywhere, Category = "Skill2")
+	UParticleSystem* skill2HitParticle;
+
+	UPROPERTY(EditAnywhere, Category = "Skill3")
+	float skill3CoolTime;
+	UPROPERTY(EditAnywhere, Category = "Skill3")
+	UAnimSequence* skill3Anim;
+	UPROPERTY(EditAnywhere, Category = "Skill3")
+	UParticleSystem* skill3HitParticle;
+
 
 	UAnimInstance* animInst;
 
