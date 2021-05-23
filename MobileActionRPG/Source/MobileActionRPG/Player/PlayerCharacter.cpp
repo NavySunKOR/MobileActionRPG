@@ -2,6 +2,7 @@
 
 #include "MobileActionRPG/Player/PlayerCharacter.h"
 #include <GameFramework/SpringArmComponent.h>
+#include <GameFramework/CharacterMovementComponent.h>
 #include <Kismet/GameplayStatics.h>
 #include <Animation/AnimMontage.h>
 
@@ -125,6 +126,15 @@ void APlayerCharacter::Tick(float DeltaTime)
 		}
 	}
 
+	//Jump
+	if (isJump)
+	{
+		if (!IsInAir())
+		{
+			isJump = false;
+		}
+	}
+
 }
 
 // Called to bind functionality to input
@@ -146,42 +156,47 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::Attack()
 {
-	if (currentAttackType == CurrentAttackType::Idle )
+	if (!IsInAir())
 	{
-		currentAttackType = CurrentAttackType::NormalAttack;
-		isNormalAttackTransible = false;
-		mesh->PlayAnimation(normalAttackAnims[normalAttackSequence],false);
-		normalAttackSequence++;
-		if (normalAttackSequence >= normalAttackAnims.Num())
+		if (currentAttackType == CurrentAttackType::Idle)
 		{
-			normalAttackSequence = 0;
+			currentAttackType = CurrentAttackType::NormalAttack;
+			isNormalAttackTransible = false;
+			mesh->PlayAnimation(normalAttackAnims[normalAttackSequence], false);
+			normalAttackSequence++;
+			if (normalAttackSequence >= normalAttackAnims.Num())
+			{
+				normalAttackSequence = 0;
+			}
+			UE_LOG(LogTemp, Warning, TEXT("Pyungta"))
 		}
-		UE_LOG(LogTemp, Warning, TEXT("Pyungta"))
-	}
-	else if (currentAttackType == CurrentAttackType::NormalAttack && isNormalAttackTransible)
-	{
-		attackTimer = 0.f;
-		isNormalAttackTransible = false;
-		mesh->PlayAnimation(normalAttackAnims[normalAttackSequence], false);
-		normalAttackSequence++;
-		if (normalAttackSequence >= normalAttackAnims.Num())
+		else if (currentAttackType == CurrentAttackType::NormalAttack && isNormalAttackTransible)
 		{
-			normalAttackSequence = 0;
+			attackTimer = 0.f;
+			isNormalAttackTransible = false;
+			mesh->PlayAnimation(normalAttackAnims[normalAttackSequence], false);
+			normalAttackSequence++;
+			if (normalAttackSequence >= normalAttackAnims.Num())
+			{
+				normalAttackSequence = 0;
+			}
+			UE_LOG(LogTemp, Warning, TEXT("Pyungta Sequence"))
 		}
-		UE_LOG(LogTemp, Warning, TEXT("Pyungta Sequence"))
 	}
 }
 
 void APlayerCharacter::Jump()
 {
-
-	UE_LOG(LogTemp, Warning, TEXT("Jump"))
+	isJump = true;
+	GetCharacterMovement()->DoJump(false);
 }
 
 
 void APlayerCharacter::Skill1()
 {
-	if ((currentAttackType == CurrentAttackType::Idle || currentAttackType == CurrentAttackType::NormalAttack) && skill1Timer >= skill1CoolTime)
+	if ((currentAttackType == CurrentAttackType::Idle || currentAttackType == CurrentAttackType::NormalAttack) 
+		&& skill1Timer >= skill1CoolTime
+		&& !IsInAir())
 	{
 		skill1Timer = 0.f;
 		currentAttackType = CurrentAttackType::Skill1;
@@ -194,18 +209,24 @@ void APlayerCharacter::Skill1()
 
 void APlayerCharacter::Skill2()
 {
-	if (currentAttackType == CurrentAttackType::Idle && skill2Timer >= skill2CoolTime)
+	if (currentAttackType == CurrentAttackType::Idle 
+		&& skill2Timer >= skill2CoolTime
+		&& !IsInAir())
 	{
 		skill2Timer = 0.f;
 		currentAttackType = CurrentAttackType::Skill2;
 		mesh->PlayAnimation(skill2Anim, false);
+		GetCharacterMovement()->AddImpulse(GetActorForwardVector() * 1000.f, true);
+		GetCharacterMovement()->DoJump(false);
 		UE_LOG(LogTemp, Warning, TEXT("Skill2"))
 	}
 }
 
 void APlayerCharacter::Skill3()
 {
-	if (currentAttackType == CurrentAttackType::Idle && skill3Timer >= skill3CoolTime)
+	if (currentAttackType == CurrentAttackType::Idle 
+		&& skill3Timer >= skill3CoolTime
+		&& !IsInAir())
 	{
 		skill3Timer = 0.f;
 		currentAttackType = CurrentAttackType::Skill3;
@@ -234,6 +255,16 @@ void APlayerCharacter::RotateHorizontal(float pValue)
 void APlayerCharacter::RotateVertical(float pValue)
 {
 	AddControllerPitchInput(pValue);
+}
+
+bool APlayerCharacter::IsJump()
+{
+	return isJump;
+}
+
+bool APlayerCharacter::IsInAir()
+{
+	return GetCharacterMovement()->IsFalling();
 }
 
 bool APlayerCharacter::IsLockOn()

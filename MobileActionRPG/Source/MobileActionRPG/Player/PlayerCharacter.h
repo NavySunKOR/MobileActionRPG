@@ -30,6 +30,7 @@ private:
 	USkeletalMeshComponent* mesh;
 	bool isLockOn = false;
 	bool isNormalAttackTransible = true;
+	bool isJump = false;
 	float attackTimer = 0.f;
 	float moveHorizontal = 0.f;
 	float moveVertical = 0.f;
@@ -112,8 +113,12 @@ public:
 	void RotateVertical(float pValue);
 
 	UFUNCTION(BlueprintPure)
-	bool IsLockOn();
+	bool IsJump();
+	UFUNCTION(BlueprintPure)
+	bool IsInAir();
 
+	UFUNCTION(BlueprintPure)
+	bool IsLockOn();
 	UFUNCTION(BlueprintPure)
 	float GetNonLockOnSpeed();
 	UFUNCTION(BlueprintPure)
