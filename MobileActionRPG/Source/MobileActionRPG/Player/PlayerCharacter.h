@@ -112,6 +112,10 @@ private:
 	UParticleSystem* skill2HitParticle;
 
 	UPROPERTY(EditAnywhere, Category = "Skill3")
+	float skill3AttackRadius;
+	UPROPERTY(EditAnywhere, Category = "Skill3")
+	float skill3DamageMultiplier;
+	UPROPERTY(EditAnywhere, Category = "Skill3")
 	float skill3CoolTime;
 	UPROPERTY(EditAnywhere, Category = "Skill3")
 	UAnimSequence* skill3Anim;

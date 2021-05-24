@@ -95,8 +95,14 @@ void APlayerCharacter::Tick(float DeltaTime)
 		}
 		else if (currentAttackType == CurrentAttackType::Skill3)
 		{
+			if (attackTimer > skill3Anim->SequenceLength * 0.7f && !isActiveSkillBounded)
+			{
+				Skill3CheckHit();
+				isActiveSkillBounded = true;
+			}
 			if (attackTimer > skill3Anim->SequenceLength)
 			{
+				isActiveSkillBounded = false;
 				attackTimer = 0.f;
 				currentAttackType = CurrentAttackType::Idle;
 				mesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
@@ -363,6 +369,27 @@ void APlayerCharacter::Skill3()
 
 void APlayerCharacter::Skill3CheckHit()
 {
+	FVector myLocation = GetActorLocation();
+	TActorRange<AAICharacter> aiCharacters = TActorRange<AAICharacter>(GetWorld());
+
+	for (AAICharacter* aiCharacter : aiCharacters)
+	{
+		if (!aiCharacter->IsHidden())
+		{
+
+			UE_LOG(LogTemp, Warning, TEXT("Skill3CheckHit Check"))
+			FVector vectorDiff = aiCharacter->GetActorLocation() - GetActorLocation();
+			float distance = vectorDiff.Size();
+
+			//판정은 위아래로 70.f 에 원형으로 데미지가 들어감.
+			if (distance < skill3AttackRadius
+				&&FMath::Abs<float>(vectorDiff.Z)<= 110.f)
+			{
+				aiCharacter->TookDamage(GetActorLocation(), damage * skill3DamageMultiplier);
+			}
+		}
+	}
+
 }
 
 void APlayerCharacter::MoveVertical(float pValue)
