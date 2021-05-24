@@ -54,10 +54,19 @@ private:
 	float skill3Timer = 0.f;
 
 
+	bool isActiveSkillBounded = false;
+
+
 	UPROPERTY(EditAnywhere, Category = "Status")
 	float damage;
 
 
+	UPROPERTY(EditAnywhere, Category = "NormalAttack")
+	float normalAttackWeakDamageMultiplier;
+	UPROPERTY(EditAnywhere, Category = "NormalAttack")
+	float normalAttackStrongDamageMultiplier;
+	UPROPERTY(EditAnywhere, Category = "NormalAttack")
+	float normalAttackRadius;
 	UPROPERTY(EditAnywhere, Category = "NormalAttack")
 	TArray<UAnimSequence*> normalAttackAnims;
 	UPROPERTY(EditAnywhere, Category = "NormalAttack")
@@ -90,8 +99,11 @@ private:
 	float skill1DurationHitTimer;
 	float skill1DurationHitInterval;
 	
-	
 
+	UPROPERTY(EditAnywhere, Category = "Skill2")
+	float skill2AttackRadius;
+	UPROPERTY(EditAnywhere, Category = "Skill2")
+	float skill2DamageMultiplier;
 	UPROPERTY(EditAnywhere, Category = "Skill2")
 	float skill2CoolTime;
 	UPROPERTY(EditAnywhere, Category = "Skill2")

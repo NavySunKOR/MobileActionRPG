@@ -27,6 +27,8 @@ void APlayerCharacter::BeginPlay()
 	skill2Timer = skill2CoolTime;
 	skill3Timer = skill3CoolTime;
 	skill1DurationHitInterval = (skill1Duration / skill1DurationHitCount);
+
+	UE_LOG(LogTemp, Warning, TEXT("Pyungta dmg %f"), damage);
 }
 
 // Called every frame
@@ -78,8 +80,14 @@ void APlayerCharacter::Tick(float DeltaTime)
 		}
 		else if (currentAttackType == CurrentAttackType::Skill2)
 		{
+			if (attackTimer > skill2Anim->SequenceLength * 0.7f && !isActiveSkillBounded)
+			{
+				Skill2CheckHit();
+				isActiveSkillBounded = true;
+			}
 			if (attackTimer > skill2Anim->SequenceLength)
 			{
+				isActiveSkillBounded = false;
 				attackTimer = 0.f;
 				currentAttackType = CurrentAttackType::Idle;
 				mesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
@@ -174,6 +182,7 @@ void APlayerCharacter::Attack()
 			currentAttackType = CurrentAttackType::NormalAttack;
 			isNormalAttackTransible = false;
 			mesh->PlayAnimation(normalAttackAnims[normalAttackSequence], false);
+			AttackCheckHit();
 			normalAttackSequence++;
 			if (normalAttackSequence >= normalAttackAnims.Num())
 			{
@@ -186,6 +195,7 @@ void APlayerCharacter::Attack()
 			attackTimer = 0.f;
 			isNormalAttackTransible = false;
 			mesh->PlayAnimation(normalAttackAnims[normalAttackSequence], false);
+			AttackCheckHit();
 			normalAttackSequence++;
 			if (normalAttackSequence >= normalAttackAnims.Num())
 			{
@@ -198,7 +208,38 @@ void APlayerCharacter::Attack()
 
 void APlayerCharacter::AttackCheckHit()
 {
+	FVector myLocation = GetActorLocation();
+	TActorRange<AAICharacter> aiCharacters = TActorRange<AAICharacter>(GetWorld());
 
+	for (AAICharacter* aiCharacter : aiCharacters)
+	{
+		if (!aiCharacter->IsHidden())
+		{
+
+			UE_LOG(LogTemp, Warning, TEXT("AttackHit Check"))
+			FVector vectorDiff = aiCharacter->GetActorLocation() - GetActorLocation();
+			float distance = vectorDiff.Size();
+			float rangeMultiplyRatio = (normalAttackSequence == 1 || normalAttackSequence == 3) ? 1.3f : 1.f;
+
+			UE_LOG(LogTemp, Warning, TEXT("Property Check distance : %f , vectorDiff.Z  %f"), distance, vectorDiff.Z);
+
+			if (distance < normalAttackRadius * rangeMultiplyRatio
+				&&
+				(vectorDiff.Z >= 0 && vectorDiff.Z <= 50.f))
+			{
+				FVector forward = GetActorForwardVector();
+				vectorDiff.Z = 0.f;
+				forward.Z = 0.f;
+				
+				//평타 판정은 180도이다. 그러므로 굳이 cos 값이 필요 없다.
+				if (FVector::DotProduct(forward, vectorDiff) > 0)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("GO gym go Check"))
+					aiCharacter->TookDamage(GetActorLocation(), damage * (normalAttackSequence == 1 || normalAttackSequence == 3) ? normalAttackStrongDamageMultiplier : normalAttackWeakDamageMultiplier);
+				}
+			}
+		}
+	}
 }
 
 void APlayerCharacter::Jump()
@@ -238,17 +279,17 @@ void APlayerCharacter::Skill1CheckHit(Skill1AttackStatus pStatus)
 
 			if (distance < skill1Radius * rangeMultiplyRatio && heightDistance < 50.f)
 			{
-				if (pStatus == Skill1AttackStatus::Init)
+				switch (pStatus)
 				{
-					aiCharacter->TookDamage(GetActorLocation(), skill1InitDamageMultiplier * damage);
-				}
-				else if (pStatus == Skill1AttackStatus::Duration)
-				{
-					aiCharacter->TookDamage(GetActorLocation(), skill1DurationDamageMultiplier * damage);
-				}
-				else
-				{
+				case Skill1AttackStatus::Init:
+					aiCharacter->TookDamage(GetActorLocation(), skill1InitDamageMultiplier * damage); 
+					break;
+				case Skill1AttackStatus::Duration:
+					aiCharacter->TookDamage(GetActorLocation(), skill1DurationDamageMultiplier * damage); 
+					break;
+				default:
 					aiCharacter->TookDamage(GetActorLocation(), skill1EndDamageMultiplier * damage);
+					break;
 				}
 			}
 		}
@@ -274,6 +315,37 @@ void APlayerCharacter::Skill2()
 
 void APlayerCharacter::Skill2CheckHit()
 {
+	FVector myLocation = GetActorLocation();
+	TActorRange<AAICharacter> aiCharacters = TActorRange<AAICharacter>(GetWorld());
+
+	for (AAICharacter* aiCharacter : aiCharacters)
+	{
+		if (!aiCharacter->IsHidden())
+		{
+
+			UE_LOG(LogTemp, Warning, TEXT("AttackHit Check"))
+			FVector vectorDiff = aiCharacter->GetActorLocation() - GetActorLocation();
+			float distance = vectorDiff.Size();
+
+			UE_LOG(LogTemp, Warning, TEXT("Property Check distance : %f , vectorDiff.Z  %f"), distance, vectorDiff.Z);
+
+			if (distance < skill2AttackRadius 
+				&&
+				(vectorDiff.Z >= 0 && vectorDiff.Z <= 50.f))
+			{
+				FVector forward = GetActorForwardVector();
+				vectorDiff.Z = 0.f;
+				forward.Z = 0.f;
+
+				//스킬 판정은 60도이다. 
+				if (FVector::DotProduct(forward, vectorDiff) / (forward.Size() * vectorDiff.Size())> 0.8f)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Skill go gym go total %f , damage : %f , multiply :%f"), damage * skill2DamageMultiplier,damage, skill2DamageMultiplier)
+					aiCharacter->TookDamage(GetActorLocation(), damage * skill2DamageMultiplier);
+				}
+			}
+		}
+	}
 }
 
 void APlayerCharacter::Skill3()

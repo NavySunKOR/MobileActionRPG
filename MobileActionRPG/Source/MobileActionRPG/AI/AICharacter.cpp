@@ -87,25 +87,25 @@ void AAICharacter::TookDamage(FVector pAttackFrom, float pOriginalDamage)
 {
 	UE_LOG(LogTemp, Warning, TEXT("before take hit curHp %d"), curHp);
 	AttackDirectionType direction = CalcAttackDirection(pAttackFrom);
-	if (direction == AttackDirectionType::Front)
+	switch (direction)
 	{
-		curHp -= pOriginalDamage;
-		UE_LOG(LogTemp,Warning, TEXT("curHp %d"),curHp);
-	}
-	else if (direction == AttackDirectionType::Back)
-	{
-		curHp -= pOriginalDamage * InGameCombatProperties::BACK_ATTACK_DAMAGE_MULTIPLYER;
-		UE_LOG(LogTemp, Warning, TEXT("curHp %d"), curHp);
-	}
-	else if (direction == AttackDirectionType::Left)
-	{
-		curHp -= pOriginalDamage * InGameCombatProperties::SIDE_ATTACK_DAMAGE_MULTIPLYER;
-		UE_LOG(LogTemp, Warning, TEXT("curHp %d"), curHp);
-	}
-	else if (direction == AttackDirectionType::Right)
-	{
-		curHp -= pOriginalDamage * InGameCombatProperties::SIDE_ATTACK_DAMAGE_MULTIPLYER;
-		UE_LOG(LogTemp, Warning, TEXT("curHp %d"), curHp);
+		case AttackDirectionType::Front: 
+			curHp -= pOriginalDamage;
+			UE_LOG(LogTemp, Warning, TEXT("curHp %d"), curHp);
+			break;
+		case AttackDirectionType::Back: 
+			curHp -= pOriginalDamage * InGameCombatProperties::BACK_ATTACK_DAMAGE_MULTIPLYER;
+			UE_LOG(LogTemp, Warning, TEXT("curHp %d"), curHp);
+			break;
+		case AttackDirectionType::Left:
+			curHp -= pOriginalDamage * InGameCombatProperties::SIDE_ATTACK_DAMAGE_MULTIPLYER;
+			UE_LOG(LogTemp, Warning, TEXT("curHp %d"), curHp);
+			break;
+		case AttackDirectionType::Right: 
+			curHp -= pOriginalDamage * InGameCombatProperties::SIDE_ATTACK_DAMAGE_MULTIPLYER;
+			UE_LOG(LogTemp, Warning, TEXT("curHp %d"), curHp);
+			break;
+		default: break;
 	}
 
 	if (curHp <= 0)
