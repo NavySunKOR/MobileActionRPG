@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "MobileActionRPG/Player/PlayerCharacter.h"
+#include "MobileActionRPG/AI/AICharacter.h"
 #include <GameFramework/SpringArmComponent.h>
 #include <GameFramework/CharacterMovementComponent.h>
 #include <Kismet/GameplayStatics.h>
@@ -25,6 +26,7 @@ void APlayerCharacter::BeginPlay()
 	skill1Timer = skill1CoolTime;
 	skill2Timer = skill2CoolTime;
 	skill3Timer = skill3CoolTime;
+	skill1DurationHitInterval = (skill1Duration / skill1DurationHitCount);
 }
 
 // Called every frame
@@ -115,12 +117,21 @@ void APlayerCharacter::Tick(float DeltaTime)
 	if (isSkill1Activated)
 	{
 		skill1DurationTimer += DeltaTime;
+		skill1DurationHitTimer += DeltaTime;
+
+		if (skill1DurationHitTimer > skill1DurationHitInterval)
+		{
+			skill1DurationHitTimer = 0.f;
+			Skill1CheckHit(Skill1AttackStatus::Duration);
+		}
+
 		//Skill1 duration 판정
 		if (skill1DurationTimer > skill1Duration)
 		{
 			//Skill1 finish 판정
 			skill1DurationTimer = 0.f;
 			isSkill1Activated = false;
+			Skill1CheckHit(Skill1AttackStatus::End);
 			UGameplayStatics::SpawnEmitterAttached(skill1DurationEndParticle, GetMesh(), TEXT("Root"),FVector(0,0,100.f));
 			UGameplayStatics::SpawnSoundAttached(skill1DurationEndSound, GetMesh(), TEXT("Root"));
 		}
@@ -185,6 +196,11 @@ void APlayerCharacter::Attack()
 	}
 }
 
+void APlayerCharacter::AttackCheckHit()
+{
+
+}
+
 void APlayerCharacter::Jump()
 {
 	isJump = true;
@@ -202,8 +218,42 @@ void APlayerCharacter::Skill1()
 		currentAttackType = CurrentAttackType::Skill1;
 		isSkill1Activated = true;
 		mesh->PlayAnimation(skill1Anim, false);
+		Skill1CheckHit(Skill1AttackStatus::Init);
 		UE_LOG(LogTemp, Warning, TEXT("Skill1"))
 	}
+}
+
+void APlayerCharacter::Skill1CheckHit(Skill1AttackStatus pStatus)
+{
+	FVector myLocation = GetActorLocation();
+	TActorRange<AAICharacter> aiCharacters = TActorRange<AAICharacter>(GetWorld());
+	float rangeMultiplyRatio = (pStatus == Skill1AttackStatus::Init || pStatus == Skill1AttackStatus::End) ? 1.3f : 1.f;
+	for (AAICharacter* aiCharacter : aiCharacters)
+	{
+		if (!aiCharacter->IsHidden())
+		{
+			FVector vectorDiff = aiCharacter->GetActorLocation() - GetActorLocation();
+			float distance = vectorDiff.Size();
+			float heightDistance = FMath::Abs<float>(vectorDiff.Z);
+
+			if (distance < skill1Radius * rangeMultiplyRatio && heightDistance < 50.f)
+			{
+				if (pStatus == Skill1AttackStatus::Init)
+				{
+					aiCharacter->TookDamage(GetActorLocation(), skill1InitDamageMultiplier * damage);
+				}
+				else if (pStatus == Skill1AttackStatus::Duration)
+				{
+					aiCharacter->TookDamage(GetActorLocation(), skill1DurationDamageMultiplier * damage);
+				}
+				else
+				{
+					aiCharacter->TookDamage(GetActorLocation(), skill1EndDamageMultiplier * damage);
+				}
+			}
+		}
+	}
+
 }
 
 
@@ -222,6 +272,10 @@ void APlayerCharacter::Skill2()
 	}
 }
 
+void APlayerCharacter::Skill2CheckHit()
+{
+}
+
 void APlayerCharacter::Skill3()
 {
 	if (currentAttackType == CurrentAttackType::Idle 
@@ -233,6 +287,10 @@ void APlayerCharacter::Skill3()
 		mesh->PlayAnimation(skill3Anim, false);
 		UE_LOG(LogTemp, Warning, TEXT("Skill3"))
 	}
+}
+
+void APlayerCharacter::Skill3CheckHit()
+{
 }
 
 void APlayerCharacter::MoveVertical(float pValue)

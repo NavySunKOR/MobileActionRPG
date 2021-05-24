@@ -3,12 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "GameFramework/Character.h"	
+#include "EngineUtils.h"
 #include "PlayerCharacter.generated.h"
 
 class USpringArmComponent;
 class USkeletalMeshComponent;
 class USkillInformation;
+class AAICharacter;
 
 
 enum class CurrentAttackType
@@ -18,6 +20,13 @@ enum class CurrentAttackType
 	Skill1,
 	Skill2,
 	Skill3,
+};
+
+enum class Skill1AttackStatus
+{
+	Init = 1,
+	Duration = 2,
+	End = 3
 };
 
 
@@ -45,15 +54,29 @@ private:
 	float skill3Timer = 0.f;
 
 
+	UPROPERTY(EditAnywhere, Category = "Status")
+	float damage;
+
+
 	UPROPERTY(EditAnywhere, Category = "NormalAttack")
 	TArray<UAnimSequence*> normalAttackAnims;
 	UPROPERTY(EditAnywhere, Category = "NormalAttack")
 	UParticleSystem* normalAttackHitParticle;
 
 	UPROPERTY(EditAnywhere, Category = "Skill1")
+	float skill1InitDamageMultiplier;
+	UPROPERTY(EditAnywhere, Category = "Skill1")
+	float skill1DurationDamageMultiplier;
+	UPROPERTY(EditAnywhere, Category = "Skill1")
+	float skill1EndDamageMultiplier;
+	UPROPERTY(EditAnywhere, Category = "Skill1")
 	float skill1CoolTime;
 	UPROPERTY(EditAnywhere, Category = "Skill1")
 	float skill1Duration;
+	UPROPERTY(EditAnywhere, Category = "Skill1")
+	int skill1DurationHitCount;
+	UPROPERTY(EditAnywhere, Category = "Skill1")
+	float skill1Radius;
 	UPROPERTY(EditAnywhere, Category = "Skill1")
 	UAnimSequence* skill1Anim;
 	UPROPERTY(EditAnywhere, Category = "Skill1")
@@ -64,6 +87,8 @@ private:
 	UParticleSystem* skill1DurationEndParticle;
 	bool isSkill1Activated = false;
 	float skill1DurationTimer;
+	float skill1DurationHitTimer;
+	float skill1DurationHitInterval;
 	
 	
 
@@ -101,10 +126,14 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void Attack();
+	void AttackCheckHit();
 	void Jump();
 	void Skill1();
+	void Skill1CheckHit(Skill1AttackStatus pStatus);
 	void Skill2();
+	void Skill2CheckHit();
 	void Skill3();
+	void Skill3CheckHit();
 
 	void MoveVertical(float pValue);
 	void MoveHorizontal(float pValue);
