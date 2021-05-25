@@ -56,7 +56,6 @@ private:
 
 	bool isActiveSkillBounded = false;
 
-
 	UPROPERTY(EditAnywhere, Category = "Status")
 	float damage;
 
@@ -121,10 +120,6 @@ private:
 	UAnimSequence* skill3Anim;
 	UPROPERTY(EditAnywhere, Category = "Skill3")
 	UParticleSystem* skill3HitParticle;
-
-
-	UAnimInstance* animInst;
-
 
 public:
 	// Sets default values for this character's properties

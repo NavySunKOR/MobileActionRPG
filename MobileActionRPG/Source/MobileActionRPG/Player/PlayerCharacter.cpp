@@ -2,6 +2,7 @@
 
 #include "MobileActionRPG/Player/PlayerCharacter.h"
 #include "MobileActionRPG/AI/AICharacter.h"
+#include "MobileActionRPG/InGameProperties/InGameCombatProperties.h"
 #include <GameFramework/SpringArmComponent.h>
 #include <GameFramework/CharacterMovementComponent.h>
 #include <Kismet/GameplayStatics.h>
@@ -21,7 +22,6 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	mesh = GetMesh();
-	animInst = mesh->GetAnimInstance();
 	springArm = Cast<USpringArmComponent>(GetDefaultSubobjectByName(TEXT("CameraArm")));
 	skill1Timer = skill1CoolTime;
 	skill2Timer = skill2CoolTime;
@@ -241,7 +241,7 @@ void APlayerCharacter::AttackCheckHit()
 				if (FVector::DotProduct(forward, vectorDiff) > 0)
 				{
 					UE_LOG(LogTemp, Warning, TEXT("GO gym go Check"))
-					aiCharacter->TookDamage(GetActorLocation(), damage * (normalAttackSequence == 1 || normalAttackSequence == 3) ? normalAttackStrongDamageMultiplier : normalAttackWeakDamageMultiplier);
+					aiCharacter->TookDamage(GetActorLocation(), damage * (normalAttackSequence == 1 || normalAttackSequence == 3) ? normalAttackStrongDamageMultiplier : normalAttackWeakDamageMultiplier,StunType::WeakStun);
 				}
 			}
 		}
@@ -288,13 +288,13 @@ void APlayerCharacter::Skill1CheckHit(Skill1AttackStatus pStatus)
 				switch (pStatus)
 				{
 				case Skill1AttackStatus::Init:
-					aiCharacter->TookDamage(GetActorLocation(), skill1InitDamageMultiplier * damage); 
+					aiCharacter->TookDamage(GetActorLocation(), skill1InitDamageMultiplier * damage, StunType::MidStun);
 					break;
 				case Skill1AttackStatus::Duration:
-					aiCharacter->TookDamage(GetActorLocation(), skill1DurationDamageMultiplier * damage); 
+					aiCharacter->TookDamage(GetActorLocation(), skill1DurationDamageMultiplier * damage, StunType::NoStun);
 					break;
 				default:
-					aiCharacter->TookDamage(GetActorLocation(), skill1EndDamageMultiplier * damage);
+					aiCharacter->TookDamage(GetActorLocation(), skill1EndDamageMultiplier * damage, StunType::MidStun);
 					break;
 				}
 			}
@@ -347,7 +347,7 @@ void APlayerCharacter::Skill2CheckHit()
 				if (FVector::DotProduct(forward, vectorDiff) / (forward.Size() * vectorDiff.Size())> 0.8f)
 				{
 					UE_LOG(LogTemp, Warning, TEXT("Skill go gym go total %f , damage : %f , multiply :%f"), damage * skill2DamageMultiplier,damage, skill2DamageMultiplier)
-					aiCharacter->TookDamage(GetActorLocation(), damage * skill2DamageMultiplier);
+					aiCharacter->TookDamage(GetActorLocation(), damage * skill2DamageMultiplier, StunType::HeavyStun);
 				}
 			}
 		}
@@ -385,7 +385,7 @@ void APlayerCharacter::Skill3CheckHit()
 			if (distance < skill3AttackRadius
 				&&FMath::Abs<float>(vectorDiff.Z)<= 110.f)
 			{
-				aiCharacter->TookDamage(GetActorLocation(), damage * skill3DamageMultiplier);
+				aiCharacter->TookDamage(GetActorLocation(), damage * skill3DamageMultiplier, StunType::VeryHeavyStun);
 			}
 		}
 	}

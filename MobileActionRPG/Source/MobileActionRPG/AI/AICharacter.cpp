@@ -3,6 +3,7 @@
 
 #include "MobileActionRPG/AI/AICharacter.h"
 #include "MobileActionRPG/InGameProperties/InGameCombatProperties.h"
+#include <Kismet/GameplayStatics.h>
 
 // Sets default values
 AAICharacter::AAICharacter()
@@ -65,6 +66,10 @@ void AAICharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	curHp = maxHp;
+	trackingPlayer = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	mesh = GetMesh();
+	defaultAnimationSpeed = InGameCombatProperties::PLAY_ANIMATION_SPEED_MID;
+	mesh->SetPlayRate(defaultAnimationSpeed);
 
 	UE_LOG(LogTemp, Warning, TEXT("init curHp %d"), curHp);
 }
@@ -73,7 +78,17 @@ void AAICharacter::BeginPlay()
 void AAICharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	if (isHit)
+	{
+		hitTimer += DeltaTime;
+		if (hitTimer > hitInterval)
+		{
+			mesh->SetAnimationMode(EAnimationMode::Type::AnimationBlueprint);
+			mesh->SetPlayRate(defaultAnimationSpeed);
+			isHit = false;
+			hitTimer = 0.f;
+		}
+	}
 }
 
 // Called to bind functionality to input
@@ -83,35 +98,70 @@ void AAICharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 }
 
-void AAICharacter::TookDamage(FVector pAttackFrom, float pOriginalDamage)
+void AAICharacter::TookDamage(FVector pAttackFrom, float pOriginalDamage, StunType pStunType)
 {
 	UE_LOG(LogTemp, Warning, TEXT("before take hit curHp %d"), curHp);
+	if (isDead)
+		return;
+
 	AttackDirectionType direction = CalcAttackDirection(pAttackFrom);
 	switch (direction)
 	{
 		case AttackDirectionType::Front: 
 			curHp -= pOriginalDamage;
-			UE_LOG(LogTemp, Warning, TEXT("curHp %d"), curHp);
 			break;
 		case AttackDirectionType::Back: 
 			curHp -= pOriginalDamage * InGameCombatProperties::BACK_ATTACK_DAMAGE_MULTIPLYER;
-			UE_LOG(LogTemp, Warning, TEXT("curHp %d"), curHp);
 			break;
 		case AttackDirectionType::Left:
 			curHp -= pOriginalDamage * InGameCombatProperties::SIDE_ATTACK_DAMAGE_MULTIPLYER;
-			UE_LOG(LogTemp, Warning, TEXT("curHp %d"), curHp);
 			break;
 		case AttackDirectionType::Right: 
 			curHp -= pOriginalDamage * InGameCombatProperties::SIDE_ATTACK_DAMAGE_MULTIPLYER;
-			UE_LOG(LogTemp, Warning, TEXT("curHp %d"), curHp);
 			break;
 		default: break;
 	}
 
+	if (pStunType != StunType::NoStun)
+	{
+		//mesh->SetAnimationMode(EAnimationMode::Type::AnimationSingleNode);
+		mesh->PlayAnimation(hitAnimations[(int)direction], false);
+	}
+
+
+	switch (pStunType)
+	{
+		case StunType::NoStun:
+			mesh->SetPlayRate(InGameCombatProperties::PLAY_ANIMATION_SPEED_MID);
+			hitInterval = hitAnimations[(int)direction]->SequenceLength * InGameCombatProperties::PLAY_ANIMATION_SPEED_MID;
+			break;
+		case StunType::WeakStun:
+			mesh->SetPlayRate(InGameCombatProperties::PLAY_ANIMATION_SPEED_FAST);
+			hitInterval = hitAnimations[(int)direction]->SequenceLength * InGameCombatProperties::PLAY_ANIMATION_SPEED_FAST;
+			break;
+		case StunType::MidStun:
+			mesh->SetPlayRate(InGameCombatProperties::PLAY_ANIMATION_SPEED_MID);
+			hitInterval = hitAnimations[(int)direction]->SequenceLength * InGameCombatProperties::PLAY_ANIMATION_SPEED_MID;
+			break;
+		case StunType::HeavyStun:
+			mesh->SetPlayRate(InGameCombatProperties::PLAY_ANIMATION_SPEED_SLOW);
+			hitInterval = hitAnimations[(int)direction]->SequenceLength * InGameCombatProperties::PLAY_ANIMATION_SPEED_SLOW;
+			break;
+		case StunType::VeryHeavyStun:
+			mesh->SetPlayRate(InGameCombatProperties::PLAY_ANIMATION_SPEED_SLOWEST);
+			hitInterval = hitAnimations[(int)direction]->SequenceLength * InGameCombatProperties::PLAY_ANIMATION_SPEED_SLOWEST;
+			break;
+		default:
+			break;
+	}
+
+
 	if (curHp <= 0)
 	{
 		curHp = 0;
-		SetActorHiddenInGame(true);
+		isDead = true;
+		mesh->PlayAnimation(deathAnimation, false);
+		//SetActorHiddenInGame(true);
 	}
 }
 
