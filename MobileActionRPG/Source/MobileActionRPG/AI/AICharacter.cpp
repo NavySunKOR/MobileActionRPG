@@ -2,8 +2,11 @@
 
 
 #include "MobileActionRPG/AI/AICharacter.h"
+#include "MobileActionRPG/AI/CustomAIController.h"
 #include "MobileActionRPG/InGameProperties/InGameCombatProperties.h"
 #include <Kismet/GameplayStatics.h>
+#include <BehaviorTree/BlackboardComponent.h>
+
 
 // Sets default values
 AAICharacter::AAICharacter()
@@ -70,6 +73,7 @@ void AAICharacter::BeginPlay()
 	mesh = GetMesh();
 	defaultAnimationSpeed = InGameCombatProperties::PLAY_ANIMATION_SPEED_MID;
 	mesh->SetPlayRate(defaultAnimationSpeed);
+	myController = Cast<ACustomAIController>(GetController());
 
 	UE_LOG(LogTemp, Warning, TEXT("init curHp %d"), curHp);
 }
@@ -77,16 +81,43 @@ void AAICharacter::BeginPlay()
 // Called every frame
 void AAICharacter::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+	Super::Tick(DeltaTime); 
+	SetIsInRangeValue();
+
+	if (myController)
+		myController->SetFocus(trackingPlayer);
+
+	if (!isHit && !isAttack && myController && !isInRange)
+	{
+		myController->MoveToActor(trackingPlayer);
+	}
+	else
+	{
+		myController->StopMovement();
+	}
+
 	if (isHit)
 	{
 		hitTimer += DeltaTime;
-		if (hitTimer > hitInterval)
+		if (hitTimer >= hitInterval)
 		{
 			mesh->SetAnimationMode(EAnimationMode::Type::AnimationBlueprint);
 			mesh->SetPlayRate(defaultAnimationSpeed);
 			isHit = false;
 			hitTimer = 0.f;
+		}
+	}
+
+	if (isAttack)
+	{
+		attackTimer += DeltaTime;
+		if (attackTimer >= attackInterval)
+		{
+			isAttack = false;
+			attackTimer = 0.f;
+			attackInterval = 0.f;
+			mesh->SetAnimationMode(EAnimationMode::Type::AnimationBlueprint);
+			mesh->SetPlayRate(defaultAnimationSpeed);
 		}
 	}
 }
@@ -122,15 +153,22 @@ void AAICharacter::TookDamage(FVector pAttackFrom, float pOriginalDamage, StunTy
 		default: break;
 	}
 
-	if (pStunType != StunType::NoStun)
+
+	//비공격중에 맞거나
+	if (!isAttack ||
+		(isAttack && !(pStunType == StunType::MidStun || pStunType == StunType::WeakStun || pStunType == StunType::NoStun)) // 어택중에 심한 공격을 맞거나
+		) 
 	{
 		//mesh->SetAnimationMode(EAnimationMode::Type::AnimationSingleNode);
 		mesh->PlayAnimation(hitAnimations[(int)direction], false);
+		isHit = true;
 	}
 
 
-	switch (pStunType)
+	if (isHit)
 	{
+		switch (pStunType)
+		{
 		case StunType::NoStun:
 			mesh->SetPlayRate(InGameCombatProperties::PLAY_ANIMATION_SPEED_MID);
 			hitInterval = hitAnimations[(int)direction]->SequenceLength * InGameCombatProperties::PLAY_ANIMATION_SPEED_MID;
@@ -153,15 +191,50 @@ void AAICharacter::TookDamage(FVector pAttackFrom, float pOriginalDamage, StunTy
 			break;
 		default:
 			break;
+		}
 	}
+	else
+	{
+		hitInterval = 0.f;
+	}
+
 
 
 	if (curHp <= 0)
 	{
 		curHp = 0;
 		isDead = true;
+		//controller clear focus
+		if (myController)
+			myController->ClearFocus(EAIFocusPriority::LastFocusPriority);
+		else
+			UE_LOG(LogTemp, Warning, TEXT("myController is nullptr"));
 		mesh->PlayAnimation(deathAnimation, false);
 		//SetActorHiddenInGame(true);
 	}
 }
 
+void AAICharacter::Attack()
+{
+	selectedAttackSequences = FMath::Rand() % attackAnimations.Num();
+	isAttack = true;
+	mesh->PlayAnimation(attackAnimations[selectedAttackSequences],false);
+	mesh->SetPlayRate(InGameCombatProperties::PLAY_ANIMATION_SPEED_MID);
+	attackInterval = attackAnimations[selectedAttackSequences]->SequenceLength * InGameCombatProperties::PLAY_ANIMATION_SPEED_MID;
+}
+
+void AAICharacter::SetIsInRangeValue()
+{
+	FVector dirToPlayer = trackingPlayer->GetActorLocation() - GetActorLocation();
+	FVector forward = GetActorForwardVector();
+	dirToPlayer.Z = 0.f;
+	forward.Z = 0.f;
+	float cosVal = FVector::DotProduct(forward, dirToPlayer) / (forward.Size() * dirToPlayer.Size());
+
+
+	isInRange = (
+		dirToPlayer.Size() <= attackRange
+		&&
+		cosVal > 0.6f
+		);
+}

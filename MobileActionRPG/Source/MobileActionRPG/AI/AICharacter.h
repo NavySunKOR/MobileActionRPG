@@ -16,6 +16,7 @@ enum class AttackDirectionType
 	Back = 3
 };
 
+class ACustomAIController;
 
 UCLASS()
 class MOBILEACTIONRPG_API AAICharacter : public ACharacter
@@ -24,15 +25,16 @@ class MOBILEACTIONRPG_API AAICharacter : public ACharacter
 private:
 	int curHp;
 	USkeletalMeshComponent* mesh;
+	ACustomAIController* myController;
 	float defaultAnimationSpeed;
-	bool isDead = false;
 
-	bool isHit = false;
-	float hitInterval = 0.f;
 	float hitTimer = 0.f;
+	float attackTimer = 0.f;
+
+	int selectedAttackSequences = 0;
+
 
 	AttackDirectionType CalcAttackDirection(FVector pAttackFrom);
-	APlayerCharacter* trackingPlayer;
 
 
 public:
@@ -46,6 +48,15 @@ protected:
 public:
 	UPROPERTY(EditAnywhere, Category = "Status")
 	int maxHp;
+	UPROPERTY(EditAnywhere, Category = "Status")
+	float attackRange;
+	bool isHit = false;
+	bool isAttack = false;
+	bool isDead = false;
+	bool isInRange = false;
+	float attackInterval = 0.f;
+	float hitInterval = 0.f;
+	APlayerCharacter* trackingPlayer;
 
 	UPROPERTY(EditAnywhere, Category = "Animations")
 	TArray<UAnimSequence*> attackAnimations;
@@ -60,6 +71,8 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	void Attack();
+	void SetIsInRangeValue();
 	void TookDamage(FVector pAttackFrom,float pOriginalDamage,StunType pStunType);
 
 };
