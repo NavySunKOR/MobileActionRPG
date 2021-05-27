@@ -167,11 +167,16 @@ void AAICharacter::TookDamage(FVector pAttackFrom, float pOriginalDamage, StunTy
 
 	if (isHit)
 	{
+		FVector myLocation = GetActorLocation();
+		myLocation.Z = 0.f;
+		pAttackFrom.Z = 0.f;
+		FVector dir =  myLocation - pAttackFrom;
+
 		switch (pStunType)
 		{
 		case StunType::NoStun:
-			mesh->SetPlayRate(InGameCombatProperties::PLAY_ANIMATION_SPEED_MID);
-			hitInterval = hitAnimations[(int)direction]->SequenceLength * InGameCombatProperties::PLAY_ANIMATION_SPEED_MID;
+			mesh->SetPlayRate(InGameCombatProperties::PLAY_ANIMATION_SPEED_FASTEST);
+			hitInterval = hitAnimations[(int)direction]->SequenceLength * InGameCombatProperties::PLAY_ANIMATION_SPEED_FASTEST;
 			break;
 		case StunType::WeakStun:
 			mesh->SetPlayRate(InGameCombatProperties::PLAY_ANIMATION_SPEED_FAST);
@@ -183,11 +188,14 @@ void AAICharacter::TookDamage(FVector pAttackFrom, float pOriginalDamage, StunTy
 			break;
 		case StunType::HeavyStun:
 			mesh->SetPlayRate(InGameCombatProperties::PLAY_ANIMATION_SPEED_SLOW);
-			hitInterval = hitAnimations[(int)direction]->SequenceLength * InGameCombatProperties::PLAY_ANIMATION_SPEED_SLOW;
+			hitInterval = hitAnimations[(int)direction]->SequenceLength * InGameCombatProperties::PLAY_ANIMATION_SPEED_SLOW;		
+		
+			mesh->AddImpulse(dir * 5000.f);
 			break;
 		case StunType::VeryHeavyStun:
 			mesh->SetPlayRate(InGameCombatProperties::PLAY_ANIMATION_SPEED_SLOWEST);
 			hitInterval = hitAnimations[(int)direction]->SequenceLength * InGameCombatProperties::PLAY_ANIMATION_SPEED_SLOWEST;
+			mesh->AddImpulse(dir * 15000.f);
 			break;
 		default:
 			break;

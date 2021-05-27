@@ -9,6 +9,33 @@
 #include <Animation/AnimMontage.h>
 
 
+void APlayerCharacter::LookTarget()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Vaveman"));
+	TActorRange<AAICharacter> aiCharacters = TActorRange<AAICharacter>(GetWorld());
+	float shortest = 0.f;
+	FVector targetLocation;
+	bool isLocationSet = false;
+
+	for (AAICharacter* aiCharacter : aiCharacters)
+	{
+		float distance = (aiCharacter->GetActorLocation() - GetActorLocation()).Size();
+
+		if (!aiCharacter->IsHidden() && (shortest <= 0.f ||distance < shortest))
+		{
+			shortest = distance;
+			targetLocation = aiCharacter->GetActorLocation();
+			isLocationSet = true;
+		}
+	}
+
+	if (isLocationSet)
+	{
+		FVector dir = (targetLocation - GetActorLocation());
+		SetActorRotation(FMath::Lerp(GetActorRotation(), dir.Rotation(), 0.1f));
+	}
+}
+
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
@@ -53,6 +80,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 	if (currentAttackType != CurrentAttackType::Idle)
 	{
 		attackTimer += DeltaTime;
+		LookTarget();
 		if (currentAttackType == CurrentAttackType::NormalAttack)
 		{
 			int calc = (normalAttackSequence - 1 < 0) ? normalAttackAnims.Num() - 1 : normalAttackSequence - 1;
@@ -63,9 +91,9 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 			if (attackTimer > normalAttackAnims[calc]->SequenceLength)
 			{
-				currentAttackType = CurrentAttackType::Idle;
 				attackTimer = 0.f;
 				normalAttackSequence = 0;
+				currentAttackType = CurrentAttackType::Idle;
 				mesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 			}
 		}
@@ -80,6 +108,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 		}
 		else if (currentAttackType == CurrentAttackType::Skill2)
 		{
+			GetCharacterMovement()->AddImpulse(GetActorForwardVector() * 10.f, true);
 			if (attackTimer > skill2Anim->SequenceLength * 0.7f && !isActiveSkillBounded)
 			{
 				Skill2CheckHit();
@@ -261,6 +290,7 @@ void APlayerCharacter::Skill1()
 		&& skill1Timer >= skill1CoolTime
 		&& !IsInAir())
 	{
+		LookTarget();
 		skill1Timer = 0.f;
 		currentAttackType = CurrentAttackType::Skill1;
 		isSkill1Activated = true;
@@ -310,10 +340,10 @@ void APlayerCharacter::Skill2()
 		&& skill2Timer >= skill2CoolTime
 		&& !IsInAir())
 	{
+		LookTarget();
 		skill2Timer = 0.f;
 		currentAttackType = CurrentAttackType::Skill2;
 		mesh->PlayAnimation(skill2Anim, false);
-		GetCharacterMovement()->AddImpulse(GetActorForwardVector() * 1000.f, true);
 		GetCharacterMovement()->DoJump(false);
 		UE_LOG(LogTemp, Warning, TEXT("Skill2"))
 	}
@@ -360,6 +390,7 @@ void APlayerCharacter::Skill3()
 		&& skill3Timer >= skill3CoolTime
 		&& !IsInAir())
 	{
+		LookTarget();
 		skill3Timer = 0.f;
 		currentAttackType = CurrentAttackType::Skill3;
 		mesh->PlayAnimation(skill3Anim, false);

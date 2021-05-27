@@ -45,8 +45,6 @@ private:
 	float moveVertical = 0.f;
 
 	int normalAttackSequence = 0;
-
-
 	CurrentAttackType currentAttackType = CurrentAttackType::Idle;
 
 	float skill1Timer = 0.f;
@@ -58,6 +56,8 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Status")
 	float damage;
+	UPROPERTY(EditAnywhere, Category = "Status")
+	float lookTargetRange;
 
 
 	UPROPERTY(EditAnywhere, Category = "NormalAttack")
@@ -120,6 +120,9 @@ private:
 	UAnimSequence* skill3Anim;
 	UPROPERTY(EditAnywhere, Category = "Skill3")
 	UParticleSystem* skill3HitParticle;
+
+
+	void LookTarget();
 
 public:
 	// Sets default values for this character's properties
