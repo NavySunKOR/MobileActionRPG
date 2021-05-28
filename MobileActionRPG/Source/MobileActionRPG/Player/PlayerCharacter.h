@@ -142,6 +142,7 @@ public:
 	void Attack();
 	void AttackCheckHit();
 	void Jump();
+
 	void Skill1();
 	void Skill1CheckHit(Skill1AttackStatus pStatus);
 	void Skill2();

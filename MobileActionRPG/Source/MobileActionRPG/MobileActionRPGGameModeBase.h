@@ -14,4 +14,5 @@ class MOBILEACTIONRPG_API AMobileActionRPGGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
 	
+
 };

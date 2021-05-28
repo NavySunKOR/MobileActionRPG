@@ -11,7 +11,6 @@
 
 void APlayerCharacter::LookTarget()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Vaveman"));
 	TActorRange<AAICharacter> aiCharacters = TActorRange<AAICharacter>(GetWorld());
 	float shortest = 0.f;
 	FVector targetLocation;
@@ -282,7 +281,6 @@ void APlayerCharacter::Jump()
 	isJump = true;
 	GetCharacterMovement()->DoJump(false);
 }
-
 
 void APlayerCharacter::Skill1()
 {
