@@ -10,6 +10,21 @@ ABattleFieldGameMode::ABattleFieldGameMode()
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	PrimaryActorTick.bCanEverTick = true;
 }
+void ABattleFieldGameMode::AIKilled()
+{
+	int count = 0;
+	for (int i = 0; i < enemyPool.Num(); i++)
+	{
+		if (enemyPool[i]->IsHidden())
+		{
+			count++;
+		}
+	}
+	if (count == spawnEnmeyAICount)
+	{
+		isSpawned = false;
+	}
+}
 bool ABattleFieldGameMode::IsInSpawnTrigger()
 {
 	FVector playerPosition = player->GetActorLocation();
@@ -27,6 +42,49 @@ bool ABattleFieldGameMode::IsInSpawnTrigger()
 
 void ABattleFieldGameMode::SpawnEnemy()
 {
+	FVector spawnPosition;
+	spawnPosition.X = FMath::RandRange(-spawnAreaMaximumRadius, spawnAreaMaximumRadius);
+	spawnPosition.Y = FMath::RandRange(-spawnAreaMaximumRadius, spawnAreaMaximumRadius);
+	spawnPosition.X = (spawnPosition.X < 0) ? FMath::Clamp<float>(spawnPosition.X, -spawnAreaMaximumRadius, -spawnAreaMinimumRadius) : FMath::Clamp<float>(spawnPosition.X, spawnAreaMinimumRadius, spawnAreaMaximumRadius);
+	spawnPosition.Y = (spawnPosition.Y < 0) ? FMath::Clamp<float>(spawnPosition.Y, -spawnAreaMaximumRadius, -spawnAreaMinimumRadius) : FMath::Clamp<float>(spawnPosition.Y, spawnAreaMinimumRadius, spawnAreaMaximumRadius);
+	spawnPosition.Z = 200.f;
+	FVector myLocation = player->GetActorLocation();
+	spawnPosition.X += myLocation.X;
+	spawnPosition.Y += myLocation.Y;
+
+	int count = 0;
+
+	for (int i = 0; i < enemyPool.Num(); i++)
+	{
+		if (enemyPool[i]->IsHidden() && count < spawnEnmeyAICount)
+		{
+			//TODO:ReactiveAI 로 리팩토링 할것.
+			enemyPool[i]->SetActorHiddenInGame(false);
+			enemyPool[i]->SetActorEnableCollision(true);
+			enemyPool[i]->SetActorLocation(spawnPosition);
+			count++;
+		}
+	}
+
+	//풀이 모자르면 추가적으로 생성해준다.
+	if (count < spawnEnmeyAICount)
+	{
+		for (int i = 0; i < spawnEnmeyAICount - count; i++)
+		{
+			enemyPool.Add(GetWorld()->SpawnActor<AAICharacter>(enemyClass));
+			enemyPool[enemyPool.Num() - 1]->SetActorLocation(spawnPosition);
+
+			//다음에 스폰 해줄 애의 포지션을 지금 해준다.
+			spawnPosition.X = FMath::RandRange(-spawnAreaMaximumRadius, spawnAreaMaximumRadius);
+			spawnPosition.Y = FMath::RandRange(-spawnAreaMaximumRadius, spawnAreaMaximumRadius);
+			spawnPosition.X = (spawnPosition.X < 0) ? FMath::Clamp<float>(spawnPosition.X, -spawnAreaMaximumRadius, -spawnAreaMinimumRadius) : FMath::Clamp<float>(spawnPosition.X, spawnAreaMinimumRadius, spawnAreaMaximumRadius);
+			spawnPosition.Y = (spawnPosition.Y < 0) ? FMath::Clamp<float>(spawnPosition.Y, -spawnAreaMaximumRadius, -spawnAreaMinimumRadius) : FMath::Clamp<float>(spawnPosition.Y, spawnAreaMinimumRadius, spawnAreaMaximumRadius);
+			spawnPosition.Z = 200.f;
+
+			spawnPosition.X += myLocation.X;
+			spawnPosition.Y += myLocation.Y;
+		}
+	}
 
 	isSpawned = true;
 	UE_LOG(LogTemp, Warning, TEXT("SpawnVector"));
@@ -44,13 +102,16 @@ void ABattleFieldGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	spawnCheckTimer += DeltaSeconds;
-	if (spawnCheckTimer > spawnCheckInterval)
+	if (!isSpawned)
 	{
-		spawnCheckTimer = 0.f;
-		if (IsInSpawnTrigger())
+		spawnCheckTimer += DeltaSeconds;
+		if (spawnCheckTimer > spawnCheckInterval)
 		{
-			SpawnEnemy();
+			spawnCheckTimer = 0.f;
+			if (IsInSpawnTrigger())
+			{
+				SpawnEnemy();
+			}
 		}
 	}
 }

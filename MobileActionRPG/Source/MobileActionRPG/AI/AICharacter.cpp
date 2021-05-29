@@ -85,17 +85,18 @@ void AAICharacter::Tick(float DeltaTime)
 	SetIsInRangeValue();
 
 	if (myController)
+	{
 		myController->SetFocus(trackingPlayer);
-
-	if (!isHit && !isAttack && myController && !isInRange)
-	{
-		myController->MoveToActor(trackingPlayer);
+		if (!isHit && !isAttack && myController && !isInRange)
+		{
+			myController->MoveToActor(trackingPlayer);
+		}
+		else
+		{
+			myController->StopMovement();
+		}
 	}
-	else
-	{
-		myController->StopMovement();
-	}
-
+		
 	if (isHit)
 	{
 		hitTimer += DeltaTime;

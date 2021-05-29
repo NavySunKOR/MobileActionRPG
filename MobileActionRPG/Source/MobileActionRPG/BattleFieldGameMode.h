@@ -19,9 +19,9 @@ class MOBILEACTIONRPG_API ABattleFieldGameMode : public AMobileActionRPGGameMode
 	GENERATED_BODY()
 
 private:
-	TArray<AAICharacter> enemyPool;
 
 	bool isSpawned = false;
+	TArray<AAICharacter*> enemyPool;
 
 	UPROPERTY(EditAnywhere)
 	float spawnCheckFrameRate;
@@ -38,12 +38,14 @@ private:
 	UPROPERTY(EditAnywhere)
 	float spawnTriggerRadius;
 
-	//스폰 트리거 포지션에서 오프셋을 더함.
 	UPROPERTY(EditAnywhere)
-	FVector spawnAreaPositionOffset;
+	float spawnAreaMaximumRadius;
 
 	UPROPERTY(EditAnywhere)
-	float spawnAreaRadius;
+	float spawnAreaMinimumRadius;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AAICharacter> enemyClass;
 
 	APlayerCharacter* player;
 
@@ -55,4 +57,5 @@ protected:
 
 public:
 	ABattleFieldGameMode();
+	void AIKilled();
 };
